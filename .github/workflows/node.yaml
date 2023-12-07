@@ -1,0 +1,35 @@
+name: node
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 14
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t dockerhub-username/node:latest .
+        docker login -u dockerhub-username -p dockerhub-password(which can be stored in secrets)
+        docker push dockerhub-username/node:latest
+
+    - name: Deploy
+      run: |
+        kubectl apply -f kubernetes-manifests/
