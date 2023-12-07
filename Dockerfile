@@ -2,10 +2,14 @@ FROM node
 
 WORKDIR /app
 
-COPY . /app
+COPY package*.json ./app
 
 RUN npm install
 
+COPY . .
+
+USER app
+
 EXPOSE 80
 
-CMD ["node", "server.js"]
+CMD ["node", "app.js"]
