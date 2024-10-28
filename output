@@ -21,7 +21,7 @@
               "columnMatch": "DetailsColumn",
               "formatOptions": {
                 "linkLabel": "Details",
-                "linkTarget": "RequestDetails"
+                "linkTarget": "{DetailsColumn}" 
               },
               "formatter": 7
             }
