@@ -1,0 +1,26 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let DependenciesData = \r\n    dependencies\r\n    | where cloud_RoleName == \"accounts-service\"\r\n    | project operation_Id, cloud_RoleName, name, duration, success, timestamp, resultCode, target; \r\n\r\nlet TracesData = \r\n    traces\r\n    | where cloud_RoleName == \"accounts-service\"\r\n    | project operation_Id, cloud_RoleName, message, severityLevel, timestamp;\r\n\r\nlet ExceptionsData = \r\n    exceptions\r\n    | where cloud_RoleName == \"accounts-service\"\r\n    | project operation_Id, cloud_RoleName, type, message, timestamp, details;\r\n\r\n// Join the three datasets on Operation_Id and cloud_RoleName\r\nDependenciesData\r\n| join kind=fullouter (TracesData) on operation_Id, cloud_RoleName\r\n| join kind=fullouter (ExceptionsData) on operation_Id, cloud_RoleName\r\n| project \r\n    operation_Id, \r\n    cloud_RoleName, \r\n    Target = target,\r\n    Dependency_Name = name, \r\n    Dependency_Duration = duration, \r\n    Dependency_Success = success, \r\n    Result_Code = resultCode,\r\n    Details = details,\r\n    Trace_Message = message, \r\n    Trace_SeverityLevel = severityLevel, \r\n    Exception_Type = type, \r\n    Exception_Message = message1, // Renamed to avoid conflict\r\n    Dependency_Timestamp = timestamp, \r\n    Trace_Timestamp = timestamp1, \r\n    Exception_Timestamp = timestamp2\r\n| order by operation_Id, cloud_RoleName, Target, Dependency_Timestamp asc, Trace_Timestamp asc, Exception_Timestamp asc\r\n",
+        "size": 0,
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": [
+          "/subscriptions/6961d861-c902-41f1-900b-b1fc5564e463/resourceGroups/gmf-centralus-devtest-paymentplatform-rg/providers/Microsoft.Insights/components/gmf-centralus-devtest-paymentplatform-app-insights"
+        ]
+      },
+      "name": "query - 0"
+    }
+  ],
+  "fallbackResourceIds": [
+    "azure monitor"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
