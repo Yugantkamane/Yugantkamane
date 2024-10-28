@@ -5,7 +5,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "let DependenciesData = \r\n    dependencies\r\n    | where cloud_RoleName == \"accounts-service\"\r\n    | project operation_Id, cloud_RoleName, name, duration, success, timestamp, resultCode, target; \r\n\r\nlet TracesData = \r\n    traces\r\n    | where cloud_RoleName == \"accounts-service\"\r\n    | project operation_Id, cloud_RoleName, message, severityLevel, timestamp;\r\n\r\nlet ExceptionsData = \r\n    exceptions\r\n    | where cloud_RoleName == \"accounts-service\"\r\n    | project operation_Id, cloud_RoleName, type, message, timestamp, details;\r\n\r\n// Join the three datasets on Operation_Id and cloud_RoleName\r\nDependenciesData\r\n| join kind=fullouter (TracesData) on operation_Id, cloud_RoleName\r\n| join kind=fullouter (ExceptionsData) on operation_Id, cloud_RoleName\r\n| project \r\n    operation_Id, \r\n    cloud_RoleName, \r\n    Target = target,\r\n    Dependency_Name = name, \r\n    Dependency_Duration = duration, \r\n    Dependency_Success = success, \r\n    Result_Code = resultCode,\r\n    Details = details,\r\n    Trace_Message = message, \r\n    Trace_SeverityLevel = severityLevel, \r\n    Exception_Type = type, \r\n    Exception_Message = message1, // Renamed to avoid conflict\r\n    Dependency_Timestamp = timestamp, \r\n    Trace_Timestamp = timestamp1, \r\n    Exception_Timestamp = timestamp2\r\n| order by operation_Id, cloud_RoleName, Target, Dependency_Timestamp asc, Trace_Timestamp asc, Exception_Timestamp asc\r\n",
+        "query": "let DependenciesData = dependencies | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, name, duration, success, timestamp, resultCode, target; let TracesData = traces | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, message, severityLevel, timestamp; let ExceptionsData = exceptions | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, type, message, timestamp, details; DependenciesData | join kind=fullouter (TracesData) on operation_Id, cloud_RoleName | join kind=fullouter (ExceptionsData) on operation_Id, cloud_RoleName | project operation_Id, cloud_RoleName, Target = target, Dependency_Name = name, Dependency_Duration = duration, Dependency_Success = success, Result_Code = resultCode, Details = details, Trace_Message = message, Trace_SeverityLevel = severityLevel, Exception_Type = type, Exception_Message = message1, Dependency_Timestamp = timestamp, Trace_Timestamp = timestamp1, Exception_Timestamp = timestamp2 | order by operation_Id, cloud_RoleName, Target, Dependency_Timestamp asc, Trace_Timestamp asc, Exception_Timestamp asc",
         "size": 0,
         "timeContext": {
           "durationMs": 86400000
@@ -14,7 +14,19 @@
         "resourceType": "microsoft.insights/components",
         "crossComponentResources": [
           "/subscriptions/6961d861-c902-41f1-900b-b1fc5564e463/resourceGroups/gmf-centralus-devtest-paymentplatform-rg/providers/Microsoft.Insights/components/gmf-centralus-devtest-paymentplatform-app-insights"
-        ]
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Details",
+              "formatOptions": {
+                "linkLabel": "Details",
+                "linkTarget": "RequestDetails"
+              },
+              "formatter": 7
+            }
+          ]
+        }
       },
       "name": "query - 0"
     }
