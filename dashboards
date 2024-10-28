@@ -1,0 +1,193 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "b70819cb-fdb0-4b54-83b5-ae6a5f978ad2",
+            "isRequired": true,
+            "jsonData": "[\r\n    {\"label\": \"USCONA\",\"value\": \"USCONA\"},\r\n    {\"label\": \"USCONL\",\"value\": \"USCONL\"},\r\n    {\"label\": \"USCVLA\",\"value\": \"USCVLA\"},\r\n    {\"label\": \"USCVLL\",\"value\": \"USCVLL\"}\r\n,\r\n    {\"label\": \"Unknown\",\"value\": \"Unknown\"}\r\n]",
+            "name": "Product",
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "type": 2,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "value": "USCONA",
+            "version": "KqlParameterItem/1.0"
+          },
+          {
+            "id": "c8854e31-7d9f-4e30-8ee9-b628d89d5e3b",
+            "isRequired": true,
+            "jsonData": "[\r\n    {\"value\": \"RouteOne\", \"label\":\"RouteOne\"},\r\n    {\"value\": \"DealerTrack\", \"label\":\"DealerTrack\"},\r\n    {\"value\": \"SalesForce\", \"label\":\"SalesForce\"},\r\n    {\"value\": \"OCA\", \"label\":\"OCA\"}\r\n]",
+            "name": "Portal",
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "type": 2,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "value": "DealerTrack",
+            "version": "KqlParameterItem/1.0"
+          },
+          {
+            "id": "8820bf05-92ea-4398-9837-1d8c54bf762a",
+            "isGlobal": true,
+            "isRequired": true,
+            "name": "TimeRange",
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "type": 4,
+            "typeSettings": {
+              "allowCustom": true,
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ]
+            },
+            "value": {
+              "durationMs": 604800000
+            },
+            "version": "KqlParameterItem/1.0"
+          },
+          {
+            "id": "627d431d-008a-435f-a35e-b5e8f1c39cb1",
+            "name": "Status",
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "type": 1,
+            "value": "Failed",
+            "version": "KqlParameterItem/1.0"
+          },
+          {
+            "description": "Filter based on Helix processing stage.",
+            "id": "50ae93c9-24ca-45e1-854e-213210fc0960",
+            "isRequired": true,
+            "jsonData": "[\r\n    {\"label\": \"Received\",\"value\": \"Received\"},\r\n    {\"label\": \"Transformed\",\"value\": \"Transformed\"},\r\n    {\"label\": \"Validated\",\"value\": \"Validated\"},\r\n    {\"label\": \"DealerInfo\",\"value\": \"DealerInfo\"},\r\n    {\"label\": \"CustomerInfo\",\"value\": \"CustomerInfo\"},\r\n    {\"label\": \"DupeAppCheck\",\"value\": \"DupeAppCheck\"},\r\n    {\"label\": \"Aggregator\",\"value\": \"Aggregator\"},\r\n    {\"label\": \"PreQualInfo\",\"value\": \"PreQualInfo\"},\r\n    {\"label\": \"BureauInfo\",\"value\": \"BureauInfo\"},\r\n    {\"label\": \"AltBureauInfo\",\"value\": \"AltBureauInfo\"},\r\n    {\"label\": \"AtbAttributesInfo\",\"value\": \"AtbAttributesInfo\"},\r\n    {\"label\": \"BureauAggregator\",\"value\": \"BureauAggregator\"},\r\n    {\"label\": \"PricingInfo\",\"value\": \"PricingInfo\"},\r\n    {\"label\": \"All\",\"value\": \"All\"}\r\n]",
+            "name": "Stage",
+            "type": 2,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "value": "All",
+            "version": "KqlParameterItem/1.0"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - 1"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let applicationEvents = traces\n| where cloud_RoleName contains 'undw'\n//| where message in ('Application Started','Application Completed', 'Application Skipped', 'Application Failed')\n| extend logEntry = parse_json(customDimensions)\n| where logEntry.AzureFunctions_FunctionName !startswith('LogAndSave')\n| where logEntry.ApplicationEventName in ('Started', 'Completed','Skipped', 'Failed') \n| where logEntry.AzureFunctions_FunctionName in ('TransformPartnerApplicationOnApplicationReceivedViaEventHub','TransformPartnerApplicationOnCreditDealerTrackMessageReceivedViaServiceBus','TransformPartnerApplicationOnCreditRouteOneMessageReceivedViaServiceBus','ValidateApplicationOnInboundApplicationTransformedEvent','CheckApplicationDuplicatesOnValidApplicationReceivedEvent','GetCustomerInformationOnValidApplicationReceivedEvent','GetDealerInfoOnValidApplicationReceivedEvent','HandleApplicantsLinkedToCustomerEvent','HandleDealerInfoReceivedEvent','HandleDuplicateApplicationInfoReceivedEvent','UpdateCustomerPreQualificationStatusOnApplicationInfoReceivedEvent','GetBureauReportOnApplicationInfoReceivedEvent','TransformToProvenirFunc','GetAltBureauReportsOnBureauInfoReceivedEvent','GetAtbAttributesOnBureauInfoReceivedEvent','HandleAltBureauReportReceivedEvent','HandleBureauAtbAttributesReceivedEvent','GetPricingScoreAndReportOnAllBureauInfoReceivedEvent')\n| where logEntry.eventName != ''\n| where logEntry.applicationId notcontains '-test-'\n| where logEntry.correlationId notcontains 'test'\n| extend Function= case(\n    logEntry.AzureFunctions_FunctionName in ('TransformPartnerApplicationOnCreditDealerTrackMessageReceivedViaServiceBus','TransformPartnerApplicationOnApplicationReceivedViaEventHub','TransformPartnerApplicationOnCreditRouteOneMessageReceivedViaServiceBus'), 'Transformer',\n    logEntry.AzureFunctions_FunctionName contains 'ValidateApplicationOnInboundApplicationTransformedEvent', 'Validate',\n    logEntry.AzureFunctions_FunctionName contains 'CheckApplicationDuplicatesOnValidApplicationReceivedEvent', 'DupeApp',\n    logEntry.AzureFunctions_FunctionName contains 'GetCustomerInformationOnValidApplicationReceivedEvent', 'CustomerLink',\n    logEntry.AzureFunctions_FunctionName contains 'GetDealerInfoOnValidApplicationReceivedEvent', 'Dealer',\n    logEntry.AzureFunctions_FunctionName contains 'HandleApplicantsLinkedToCustomerEvent', 'Aggregator',\n    logEntry.AzureFunctions_FunctionName contains 'HandleDealerInfoReceivedEvent', 'Aggregator',\n    logEntry.AzureFunctions_FunctionName contains 'HandleDuplicateApplicationInfoReceivedEvent', 'Aggregator',\n    logEntry.AzureFunctions_FunctionName contains 'UpdateCustomerPreQualificationStatusOnApplicationInfoReceivedEvent', 'PreQual',\n    logEntry.AzureFunctions_FunctionName contains 'GetBureauReportOnApplicationInfoReceivedEvent', 'Bureau',\n    logEntry.AzureFunctions_FunctionName contains 'GetAltBureauReportsOnBureauInfoReceivedEvent', 'AltBureau',\n    logEntry.AzureFunctions_FunctionName contains 'GetAtbAttributesOnBureauInfoReceivedEvent', 'AtbAttributes',\n    logEntry.AzureFunctions_FunctionName contains 'HandleAltBureauReportReceivedEvent', 'BureauAggregator',\n    logEntry.AzureFunctions_FunctionName contains 'HandleBureauAtbAttributesReceivedEvent', 'BureauAggregator',\n    logEntry.AzureFunctions_FunctionName contains 'GetPricingScoreAndReportOnAllBureauInfoReceivedEvent', 'Pricing',\n    logEntry.AzureFunctions_FunctionName contains 'TransformToProvenirFunc', 'ProvenirTransformer', ''\n    )\n| extend ShortProductCode= case(\n    logEntry.productCode contains 'USConsumerAutoLoan','USCONA',\n    logEntry.productCode contains 'USConsumerAutoLease','USCONL',\n    logEntry.productCode contains 'USCommercialAutoLoan','USCVLA',\n    logEntry.productCode contains 'USCommercialAutoLease','USCVLL',\n    'Unknown'\n    )\n| project EventTime=todatetime(timestamp), itemId, CorrelationId=tostring(logEntry.correlationId), ApplicationNumber=tostring(logEntry.partnerApplicationId), InternalApplicationId=tostring(logEntry.applicationId), Function, InternalFunctionName=tostring(logEntry.AzureFunctions_FunctionName), EventName=tostring(logEntry.eventName), Status=tostring(logEntry.ApplicationEventName), ProductCode=tostring(ShortProductCode), Partner=tostring(logEntry.partner), SkippedReason=tostring(logEntry.operationName), logEntry\n| sort by EventTime desc;\n\nlet cachedAppEvents = materialize(applicationEvents);\n\n//Getting unique product code per correlation id to populate application received record where product code is not available\nlet cachedProductCodeApps=cachedAppEvents \n| where  EventName in ('InboundApplicationTransformed')\n| where Status=='Started'\n| distinct CorrelationId, ProductCode\n| project CorrelationId, UnqiueProductCode=tostring(ProductCode);\n\nlet cachedAppEventsWithProductCode=cachedAppEvents\n| join kind=leftouter cachedProductCodeApps on CorrelationId\n| project EventTime, itemId, CorrelationId, ApplicationNumber, InternalApplicationId, Function, InternalFunctionName, EventName, Status, ProductCode=iif(ProductCode=~'Unknown' and UnqiueProductCode!='',UnqiueProductCode,ProductCode), Partner;\n\ncachedAppEventsWithProductCode\n| where Status=='{Status}'\n| where ( '{Stage}' == 'Disabled' ) or\n(\n    '{Stage}' == 'Received' and Function == 'Validate' and EventName == 'ApplicationReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'Transformed' and Function == 'Validate' and EventName == 'InboundApplicationTransformed' and Status == 'Failed'\n) or (\n    '{Stage}' == 'Validated' and Function == 'Validate' and EventName == 'InboundApplicationTransformed' and Status == 'Failed'\n) or (\n    '{Stage}' == 'DealerInfo' and Function == 'Dealer' and EventName == 'ValidApplicationReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'CustomerInfo' and Function == 'CustomerLink' and EventName == 'ValidApplicationReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'DupeAppCheck' and Function == 'DupeApp' and EventName == 'ValidApplicationReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'Aggregator' and Function == 'Aggregator' and InternalFunctionName in ('HandleDealerInfoReceivedEvent','HandleDuplicateApplicationInfoReceivedEvent','HandleApplicantsLinkedToCustomerEvent') and Status == 'Failed'\n) or (\n    '{Stage}' == 'PreQualInfo' and Function == 'PreQual' and EventName == 'ApplicationInfoReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'BureauInfo' and Function == 'Bureau' and EventName == 'PreQualificationInfoReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'AltBureauInfo' and Function == 'AltBureau' and EventName == 'BureauReportReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'AtbAttributesInfo' and Function == 'AtbAttributes' and EventName == 'BureauReportReceived' and Status == 'Failed'\n) or (\n    '{Stage}' == 'BureauAggregator' and Function == 'BureauAggregator' and InternalFunctionName in ('HandleAltBureauReportReceivedEvent','HandleBureauAtbAttributesReceivedEvent') and Status == 'Failed'\n) or (\n    '{Stage}' == 'PricingInfo' and Function == 'Pricing' and EventName == 'AllBureauInfoReceived' and Status == 'Failed'\n) or ('{Stage}' == 'All')\n| project Details=itemId, CorrelationId, EventTime, ApplicationNumber, InternalApplicationId, EventName;",
+              "size": 0,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.insights/components",
+              "crossComponentResources": [
+                "/subscriptions/36268298-6c38-40c8-a22e-04f39feaecb8/resourceGroups/gmf-centralus-test-orig-monitoring-rg/providers/Microsoft.Insights/components/gmf-centralus-test-orig-appi"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Details",
+                    "formatOptions": {
+                      "linkLabel": "Details",
+                      "linkTarget": "RequestDetails"
+                    },
+                    "formatter": 7
+                  },
+                  {
+                    "columnMatch": "InternalApplicationId",
+                    "formatter": 5
+                  },
+                  {
+                    "columnMatch": "Transaction",
+                    "formatOptions": {
+                      "linkLabel": "Details",
+                      "linkTarget": "RequestDetails"
+                    },
+                    "formatter": 7
+                  },
+                  {
+                    "columnMatch": "itemId",
+                    "formatter": 5
+                  }
+                ]
+              }
+            },
+            "name": "query - 2"
+          }
+        ]
+      },
+      "name": "drill down group"
+    }
+  ],
+  "fallbackResourceIds": [
+    "azure monitor"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
