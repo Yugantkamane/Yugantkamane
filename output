@@ -5,7 +5,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "let DependenciesData = dependencies | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, name, duration, success, timestamp, resultCode, target; let TracesData = traces | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, message, severityLevel, timestamp; let ExceptionsData = exceptions | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, type, message, timestamp, details; DependenciesData | join kind=fullouter (TracesData) on operation_Id, cloud_RoleName | join kind=fullouter (ExceptionsData) on operation_Id, cloud_RoleName | project operation_Id, cloud_RoleName, Target = target, Dependency_Name = name, Dependency_Duration = duration, Dependency_Success = success, Result_Code = resultCode, Details = details, Trace_Message = message, Trace_SeverityLevel = severityLevel, Exception_Type = type, Exception_Message = message1, Dependency_Timestamp = timestamp, Trace_Timestamp = timestamp1, Exception_Timestamp = timestamp2 | order by operation_Id, cloud_RoleName, Target, Dependency_Timestamp asc, Trace_Timestamp asc, Exception_Timestamp asc",
+        "query": "let DependenciesData = dependencies | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, name, duration, success, timestamp, resultCode, target; let TracesData = traces | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, message, severityLevel, timestamp; let ExceptionsData = exceptions | where cloud_RoleName == \"accounts-service\" | project operation_Id, cloud_RoleName, type, message, timestamp, details; DependenciesData | join kind=fullouter (TracesData) on operation_Id, cloud_RoleName | join kind=fullouter (ExceptionsData) on operation_Id, cloud_RoleName | project operation_Id, cloud_RoleName, Target = target, Dependency_Name = name, Dependency_Duration = duration, Dependency_Success = success, Result_Code = resultCode, DetailsColumn = details, Trace_Message = message, Trace_SeverityLevel = severityLevel, Exception_Type = type, Exception_Message = message1, Dependency_Timestamp = timestamp, Trace_Timestamp = timestamp1, Exception_Timestamp = timestamp2 | order by operation_Id, cloud_RoleName, Target, Dependency_Timestamp asc, Trace_Timestamp asc, Exception_Timestamp asc",
         "size": 0,
         "timeContext": {
           "durationMs": 86400000
@@ -18,7 +18,7 @@
         "gridSettings": {
           "formatters": [
             {
-              "columnMatch": "Details",
+              "columnMatch": "DetailsColumn",
               "formatOptions": {
                 "linkLabel": "Details",
                 "linkTarget": "RequestDetails"
