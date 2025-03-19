@@ -1,3 +1,223 @@
-configMap:
-  key1: value1
-  key2: value2
+locals {
+  kv_data_owner = var.environment == "prod" ? {} : {
+    "kv_data_owner" = {
+      "role_definition_name" = "Key Vault Data Owner"
+      "principal_id"         = data.azuread_group.data_owner_adgroup[0].object_id
+      "key_permissions"      = ["Backup", "Create", "Decrypt", "Delete", "Encrypt", "Get", "Import", "List", "Purge", "Recover", "Restore", "Sign", "Update", "Verify","GetRotationPolicy","SetRotationPolicy","Rotate"]
+      "secret_permissions"   = ["Backup", "Delete", "Get", "List", "Purge", "Recover", "Restore", "Set"]
+      "certificate_permissions" = ["Backup","Create","Delete","Import","Recover", "Restore","Get", "List", "Create", "ManageContacts"]
+      "storage_permissions" =  ["Get", "Set"]
+    }
+  }
+  kv_accesspolicy_data = merge(
+    local.kv_data_owner,
+    {
+      kv_data_contributor = {
+        "role_definition_name" = "Key Vault Data contributor"
+        "principal_id"         = data.azuread_group.data_contributor_adgroup.object_id
+        "key_permissions"      = ["Get", "List", "Create", "UnwrapKey", "WrapKey", "Encrypt", "Decrypt", "Sign", "Verify", "Recover", "Restore","GetRotationPolicy","SetRotationPolicy","Rotate"]
+        "secret_permissions"   = ["Get", "List", "Set", "Delete", "Recover", "Restore"]
+        "certificate_permissions" = ["Backup","Create","Delete","Import","Recover", "Restore","Get", "List", "Create", "ManageContacts"]
+        "storage_permissions" =  ["Get", "Set"]
+      },
+      kv_data_reader = {
+        "role_definition_name" = "Key Vault Data reader"
+        "principal_id"         = data.azuread_group.data_reader_adgroup.object_id
+        "key_permissions"      = ["Get", "List"]
+        "secret_permissions"   = ["Get", "List"]
+        "certificate_permissions" = ["Get", "List"]
+        "storage_permissions" =  ["Get", "Set"]
+      },
+      azdo_spn = {
+        "role_definition_name" = "azdo_spn"
+        "principal_id"         = data.azurerm_client_config.current.object_id
+        "key_permissions"      = ["Get", "List", "Create", "Delete", "Recover", "Restore", "Update", "GetRotationPolicy","SetRotationPolicy","Rotate"]
+        "secret_permissions"   = ["Get", "Set", "Delete", "List","Recover"]
+        "certificate_permissions" = ["Backup","Create","Delete","Import","Recover", "Restore","Get", "List", "Create", "ManageContacts"]
+        "storage_permissions" =  ["Get", "Set"]
+      },
+      aksidentityaccess = {
+        "role_definition_name" = "aksidentityaccess"
+        "principal_id"         = local.aks_identity_principal_id
+        "key_permissions"      = ["Get", "Import", "List", "UnwrapKey", "WrapKey"]
+        "secret_permissions"   = ["Get", "List"]
+        "certificate_permissions" = ["Get", "List"]
+        "storage_permissions" =  ["Get", "Set"]
+      }
+    }
+  )
+  kv_additional_accesspolicy_data = var.is_dedicated_resource == 1 ? {
+    aks_msi_access = {
+      "role_definition_name" = "aks_msi_access"
+      "principal_id"         = local.aks_svc_identity_principal_id
+      "secret_permissions"   = ["Get", "List"]
+    }
+  } : {}
+  
+  kv_combined_accesspolicy_data = merge(local.kv_accesspolicy_data, local.kv_additional_accesspolicy_data)
+
+  filtered_kv_accesspolicy_data = {
+    for k, v in local.kv_combined_accesspolicy_data : k => v if var.is_dedicated_resource == 1 || contains(keys(local.kv_accesspolicy_data), k)
+  }
+
+  apim_secrets = {
+    paymentstripe = {
+      name  = var.ph_payments_stripe_api_key_name
+      value = var.ph_payments_stripe_api_key
+    },
+    paymentwebhook = {
+      name  = var.ph_webhook_stripe_webhook_key_name
+      value = var.ph_webhook_stripe_webhook_key
+    }    
+  }
+  okta_credentials = {
+    paymenthub = {
+      name          = var.ph_payments_lr_okta_credentials_key_name
+      client_id     = var.ph_payments_lr_okta_client_id
+      client_secret = var.ph_payments_lr_okta_client_secret
+      scope         = var.ph_payments_lr_okta_scope
+      subscription_key = var.ph_payments_lr_apim_key_value
+    },
+    paymentaccounts = {
+      name          = var.pp_payments_accounts_okta_credentials_key_name
+      client_id     = var.pp_payments_accountservice_okta_client_id
+      client_secret = var.pp_payments_accountservice_okta_client_secret
+      scope         = var.pp_payments_accountservice_okta_scope 
+      subscription_key = var.pp_payments_accountservice_apim_key_value
+    },
+    servicingacl = {
+      name          = var.pp_payments_servicingacl_okta_credentials_key_name
+      client_id     = var.pp_payments_servicingacl_okta_client_id
+      client_secret = var.pp_payments_servicingacl_okta_client_secret
+      scope         = var.pp_payments_servicingacl_okta_scope
+      subscription_key = var.pp_payments_servicingacl_apim_key_value
+    },
+    paymentaccountsbnym = {
+      name          = var.environment != "uat" && var.environment != "prod" ? "" : var.pp_payments_accounts_okta_credentials_key_name_bnym
+      client_id     = var.environment != "uat" && var.environment != "prod" ? "" : var.pp_payments_accountservice_okta_client_id_bnym
+      client_secret = var.environment != "uat" && var.environment != "prod" ? "" : var.pp_payments_accountservice_okta_client_secret_bnym
+      scope         = var.environment != "uat" && var.environment != "prod" ? "" : var.pp_payments_accountservice_okta_scope_bnym
+      subscription_key = var.environment != "uat" && var.environment != "prod" ? "" : var.pp_payments_accountservice_apim_key_value_bnym
+    }
+  }
+  filtered_okta_credentials = {
+    for k, v in local.okta_credentials : k => v
+    if v.client_id != "" && v.client_secret != "" && v.scope != "" && v.subscription_key != "" && v.name != ""
+  }
+}
+module "keyvault" {
+  count  = var.environment == "drdevtest" ? 0 : 1
+  source  = "artifactory.gmfinancial.com/terraform__GMFinancial/terraform-azurerm-enablingtech-akv/azurerm"
+  version = "3.0.1"
+
+  cost_center               = var.cost_center 
+  environment               = var.environment
+  owner                     = var.owner
+  technical_contact         = var.technical_contact
+  repo_name                 = local.infra_repo_name
+  location                  = var.region
+  name                      = "gmf-${var.environment}-${var.product_short}-kv"   
+  resource_group_name       = azurerm_resource_group.applicationgrp.name
+  subnet_id                 = var.is_dr == 1 ? local.data_subnet_backup_id : local.config_subnet_id
+  enable_rbac_authorization = false
+  enable_purge_protection   = true
+}
+
+# Creating Access Policies for Core Key Vault
+
+resource "azurerm_key_vault_access_policy" "kv_accesspolicy" {
+  for_each = var.environment == "drdevtest" ? {} : local.filtered_kv_accesspolicy_data
+
+  key_vault_id            = module.keyvault[0].keyvault_id
+  tenant_id               = data.azurerm_client_config.current.tenant_id
+  object_id               = each.value.principal_id
+  key_permissions         = lookup(each.value, "key_permissions", [])
+  secret_permissions      = lookup(each.value, "secret_permissions", [])
+  certificate_permissions = lookup(each.value, "certificate_permissions", [])
+  storage_permissions     = lookup(each.value, "storage_permissions", [])
+}
+
+# MONITOR
+module "keyvault-monitor" {
+  count  = var.environment == "drdevtest" ? 0 : 1
+  source  = "artifactory.gmfinancial.com/terraform__GMFinancial/terraform-azurerm-core-sre-keyvault-monitor-module/azurerm"
+  version = "1.2.1"
+  
+  tags                      = local.tags
+  keyvault_name             = module.keyvault[0].keyvault_name  
+  keyvault_resource_group   = azurerm_resource_group.applicationgrp.name
+  keyvault_action_groups    = [ local.alertmgmt_action_group_id ]
+  purpose                   = var.product
+
+
+}
+
+// CERTIFICATION NOTIFCATIONS
+resource "azurerm_key_vault_certificate_contacts" "akv-cert-notification" { 
+  count  = var.environment == "drdevtest" ? 0 : 1 
+  depends_on = [azurerm_key_vault_access_policy.kv_accesspolicy, time_sleep.wait_for_akv_accesspolicies]
+  key_vault_id =  module.keyvault[0].keyvault_id
+
+  dynamic "contact" {
+      for_each = var.certificate_contacts
+      content {
+        name  = contact.value["name"]
+        email = contact.value["email"]        
+    }
+  }  
+}
+
+resource "azurerm_key_vault_secret" "dpp_serviceaclapi_apim_secret" {
+  # TODO: remove 'var.environment != "prod" &&' once the secrets are available
+  count        = var.is_dedicated_resource == 1 && var.environment != "prod"  ? 1 : 0
+  name         = var.dpp_serviceaclapi_apim_key_name
+  value        = var.dpp_serviceaclapi_apim_key_value
+  key_vault_id = module.keyvault[0].keyvault_id
+}
+
+resource "azurerm_key_vault_secret" "apim_secret" {
+  for_each     = var.is_dedicated_resource == 1  ? local.apim_secrets : {}
+  name         = each.value.name
+  value        = each.value.value
+  key_vault_id = module.keyvault[0].keyvault_id
+  expiration_date = timeadd(time_static.created_on.rfc3339, "17532h")  # Static expiration date
+}
+
+resource "azurerm_key_vault_secret" "dpp_serviceaclapi_okta_credentials_secret" {
+  # TODO: remove 'var.environment != "prod" &&' once the secrets are available
+  count        = var.is_dedicated_resource == 1 && var.environment != "prod"  ? 1 : 0
+  name         = var.dpp_serviceaclapi_okta_credentials_key_name
+  value        = jsonencode({
+    client_id     = var.dpp_serviceaclapi_okta_client_id,
+    client_secret = var.dpp_serviceaclapi_okta_client_secret
+  })
+  key_vault_id = module.keyvault[0].keyvault_id
+}
+
+resource "azurerm_key_vault_secret" "okta_credentials_secret" {
+  for_each    = var.is_dedicated_resource == 1  ? local.filtered_okta_credentials : {}
+  name        = each.value.name
+  value       = jsonencode({
+    client_id        = each.value.client_id,
+    client_secret    = each.value.client_secret,
+    scope            = each.value.scope,
+    subscription_key = each.value.subscription_key
+  })
+  key_vault_id = module.keyvault[0].keyvault_id
+  expiration_date = timeadd(time_static.created_on.rfc3339, "17532h")  # Static expiration date
+}
+
+resource "azurerm_key_vault_secret" "dpp_cloudability_api_secret" {
+  # TODO: remove 'var.environment != "prod" &&' once the secrets are available
+  count        = (var.is_shared_or_prod_resource == 1 && var.environment != "prod") ? 1 : 0
+  name         = var.cloudability_api_key_name
+  value        = var.cloudability_api_key
+  key_vault_id = module.keyvault[0].keyvault_id
+  expiration_date = timeadd(time_static.created_on.rfc3339, "17532h")  # Static expiration date
+}
+
+resource "time_sleep" "wait_for_akv_accesspolicies" {  
+  create_duration = "60s"
+
+  depends_on = [azurerm_key_vault_access_policy.kv_accesspolicy]
+}
