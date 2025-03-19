@@ -221,3 +221,24 @@ resource "time_sleep" "wait_for_akv_accesspolicies" {
 
   depends_on = [azurerm_key_vault_access_policy.kv_accesspolicy]
 }
+
+
+
+
+
+
+erro :-
+
+
+Error: Inconsistent conditional result types
+│ 
+│   on keyvault.tf line 128, in resource "azurerm_key_vault_access_policy" "kv_accesspolicy":
+│  128:   for_each                = var.environment == "drdevtest" ? {} : local.filtered_kv_accesspolicy_data 
+│     ├────────────────
+│     │ local.filtered_kv_accesspolicy_data is object with 6 attributes
+│     │ var.environment is "qa"
+│ 
+│ The true and false result expressions must have consistent types. The
+│ 'false' value includes object attribute "aks_msi_access", which is absent
+│ in the 'true' value.
+
