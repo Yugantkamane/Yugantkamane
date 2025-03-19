@@ -242,3 +242,12 @@ Error: Inconsistent conditional result types
 │ 'false' value includes object attribute "aks_msi_access", which is absent
 │ in the 'true' value.
 
+
+{ for k, v in local.filtered_kv_accesspolicy_data : k => { 
+        principal_id = null 
+        key_permissions = [] 
+        secret_permissions = [] 
+        certificate_permissions = [] 
+        storage_permissions = [] 
+    }} 
+
